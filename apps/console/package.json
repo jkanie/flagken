@@ -1,0 +1,40 @@
+{
+  "name": "@flagken/console",
+  "version": "0.1.0",
+  "private": true,
+  "description": "flagken web console: Vue 3, Vite, Pinia, Vue Router.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -p tsconfig.app.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@flagken/api-client": "workspace:*",
+    "@flagken/shared": "workspace:*",
+    "pinia": "4.1.0",
+    "vue": "3.5.45",
+    "vue-router": "5.4.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@flagken/sdk": "workspace:*",
+    "@playwright/test": "1.65.0",
+    "@testcontainers/postgresql": "12.2.1",
+    "@testcontainers/redis": "12.2.1",
+    "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
+    "@vitejs/plugin-vue": "6.0.10",
+    "@vue/test-utils": "2.5.1",
+    "happy-dom": "21.0.4",
+    "pg": "8.23.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.7",
+    "vitest": "5.1.0",
+    "vue-tsc": "3.3.14"
+  }
+}

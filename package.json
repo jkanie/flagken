@@ -1,0 +1,37 @@
+{
+  "name": "flagken",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted feature flags: targeting rules, % rollouts, kill switches, live push, a TypeScript SDK.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=26.13.0"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write . && eslint --fix .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "test:integration": "pnpm --filter @flagken/server run test:integration",
+    "test:e2e": "pnpm --filter @flagken/console run test:e2e",
+    "api:generate": "pnpm --filter @flagken/shared run build && pnpm --filter @flagken/server run build && pnpm --filter @flagken/api-client run generate",
+    "api:check": "pnpm --filter @flagken/shared run build && pnpm --filter @flagken/server run build && pnpm --filter @flagken/api-client run check",
+    "dev:server": "pnpm --filter @flagken/server run dev",
+    "dev:console": "pnpm --filter @flagken/console run dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-vue": "10.12.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vitest": "5.1.0"
+  }
+}

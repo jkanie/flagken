@@ -1,0 +1,9 @@
+dist
+node_modules
+pnpm-lock.yaml
+pnpm-workspace.yaml
+test-results
+playwright-report
+# Generated: the freshness check compares them byte for byte.
+packages/api-client/openapi.json
+packages/api-client/src/schema.ts

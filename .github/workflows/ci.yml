@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '26.13.0'
+
+jobs:
+  lint:
+    name: lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The SDK and the console type-check against the built shared packages.
+      - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm typecheck
+
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  integration:
+    name: server integration (PostgreSQL 17, Redis 8)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: flagken
+          POSTGRES_USER: flagken
+          POSTGRES_PASSWORD: flagken-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flagken"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The tests use these services instead of starting their own containers.
+      FLAGKEN_TEST_DATABASE_URL: postgres://flagken:flagken-ci-only@localhost:5432/flagken
+      FLAGKEN_TEST_REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The create-admin test runs the built CLI.
+      - run: pnpm --filter @flagken/shared --filter @flagken/server run build
+      - run: pnpm test:integration
+
+  e2e:
+    name: console end-to-end (Playwright, axe)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: flagken
+          POSTGRES_USER: flagken
+          POSTGRES_PASSWORD: flagken-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flagken"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      FLAGKEN_TEST_DATABASE_URL: postgres://flagken:flagken-ci-only@localhost:5432/flagken
+      FLAGKEN_TEST_REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @flagken/console exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: Keep the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: playwright-report
+          path: |
+            apps/console/playwright-report
+            apps/console/test-results
+
+  api-client:
+    name: generated API client is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Builds the server, prints its OpenAPI document, runs openapi-typescript, then compares with the committed files.
+      - run: pnpm api:check

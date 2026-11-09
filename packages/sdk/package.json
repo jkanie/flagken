@@ -1,0 +1,35 @@
+{
+  "name": "@flagken/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "flagken SDK for Node.js and browsers: live flags over Server-Sent Events, offline snapshots, local evaluation.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@flagken/api-client": "workspace:*",
+    "@flagken/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  }
+}

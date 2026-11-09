@@ -1,0 +1,3252 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "Auth_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "Auth_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "Auth_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "operationId": "Users_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "operationId": "Users_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "patch": {
+        "operationId": "Users_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "Projects_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ]
+      },
+      "post": {
+        "operationId": "Projects_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/environments": {
+      "post": {
+        "operationId": "Projects_createEnvironment",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnvironmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvironmentDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/environments/{environment}/api-keys": {
+      "get": {
+        "operationId": "Projects_listApiKeys",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ]
+      },
+      "post": {
+        "operationId": "Projects_createApiKey",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedApiKeyDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/environments/{environment}/api-keys/{id}": {
+      "delete": {
+        "operationId": "Projects_revokeApiKey",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/flags": {
+      "get": {
+        "operationId": "Flags_list",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search in key, name and description.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlagListItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      },
+      "post": {
+        "operationId": "Flags_create",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFlagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/flags/{flag}": {
+      "get": {
+        "operationId": "Flags_get",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ETag": {
+                "description": "Version of the flag.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      },
+      "put": {
+        "operationId": "Flags_update",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag from your last read. A stale value gets 412.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlagDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagDto"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Someone saved a newer version first."
+          },
+          "428": {
+            "description": "If-Match is missing."
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      },
+      "delete": {
+        "operationId": "Flags_archive",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The flag is archived. SDKs stop seeing it."
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/flags/{flag}/environments/{environment}": {
+      "get": {
+        "operationId": "Flags_getState",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ETag": {
+                "description": "Version of this state.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagStateDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      },
+      "put": {
+        "operationId": "Flags_updateState",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "ETag from your last read. A stale value gets 412.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlagStateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagStateDto"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Someone saved a newer version first."
+          },
+          "428": {
+            "description": "If-Match is missing."
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/flags/{flag}/environments/{environment}/kill": {
+      "put": {
+        "operationId": "Flags_kill",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagStateDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/flags/{flag}/environments/{environment}/schedules": {
+      "get": {
+        "operationId": "Schedules_list",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduledChangeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "scheduled changes"
+        ]
+      },
+      "post": {
+        "operationId": "Schedules_create",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledChangeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "scheduled changes"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/flags/{flag}/environments/{environment}/schedules/{id}": {
+      "delete": {
+        "operationId": "Schedules_cancel",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "flag",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "scheduled changes"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/webhooks": {
+      "get": {
+        "operationId": "Webhooks_list",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "post": {
+        "operationId": "Webhooks_create",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedWebhookDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/webhooks/{id}": {
+      "put": {
+        "operationId": "Webhooks_update",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhookDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "delete": {
+        "operationId": "Webhooks_remove",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/webhooks/{id}/deliveries": {
+      "get": {
+        "operationId": "Webhooks_deliveries",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookDeliveryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/webhooks/{id}/test": {
+      "post": {
+        "operationId": "Webhooks_test",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/projects/{project}/audit": {
+      "get": {
+        "operationId": "Audit_list",
+        "parameters": [
+          {
+            "name": "project",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "Entry id: list entries older than this one.",
+            "schema": {}
+          },
+          {
+            "name": "flag",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "environment",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/sdk/v1/flags": {
+      "get": {
+        "operationId": "Sdk_all",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkFlagsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "tags": [
+          "sdk"
+        ]
+      }
+    },
+    "/sdk/v1/evaluate": {
+      "post": {
+        "operationId": "Sdk_evaluate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvalContextDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkEvaluationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "tags": [
+          "sdk"
+        ]
+      }
+    },
+    "/sdk/v1/stream": {
+      "get": {
+        "operationId": "Sdk_stream",
+        "parameters": [
+          {
+            "name": "X-Flagken-Context",
+            "in": "header",
+            "description": "Client keys: base64url JSON of { key, attributes }.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event stream."
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "tags": [
+          "sdk"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "Health_liveness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "Health_readiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The Health Check is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
+                      "example": "ok"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The Health Check is not successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
+                      "example": "error"
+                    },
+                    "info": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "object",
+                      "example": {
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      },
+                      "nullable": true
+                    },
+                    "details": {
+                      "type": "object",
+                      "example": {
+                        "database": {
+                          "status": "up",
+                          "responseTime": 12
+                        },
+                        "redis": {
+                          "status": "down",
+                          "message": "Could not connect",
+                          "responseTime": 3005
+                        }
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "flagken",
+    "description": "Self-hosted feature flags. Console routes use the session cookie, SDK routes an environment API key.",
+    "version": "0.1.0",
+    "contact": {},
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/license/mit"
+    }
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "flagken_session"
+      },
+      "apiKey": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "description": "Environment API key: fk_srv_... or fk_cli_..."
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "owner@example.com"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "owner",
+          "editor",
+          "viewer"
+        ]
+      },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "createdAt",
+          "disabled"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "role"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              }
+            ]
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EnvironmentDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ]
+      },
+      "ProjectDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnvironmentDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "environments"
+        ]
+      },
+      "CreateProjectDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ]
+      },
+      "CreateEnvironmentDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name"
+        ]
+      },
+      "ApiKeyKind": {
+        "type": "string",
+        "enum": [
+          "server",
+          "client"
+        ]
+      },
+      "ApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiKeyKind"
+              }
+            ]
+          },
+          "prefix": {
+            "type": "string",
+            "description": "First characters of the key."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "revokedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "prefix",
+          "createdAt",
+          "revokedAt"
+        ]
+      },
+      "CreateApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiKeyKind"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
+      },
+      "CreatedApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiKeyKind"
+              }
+            ]
+          },
+          "prefix": {
+            "type": "string",
+            "description": "First characters of the key."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "revokedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "key": {
+            "type": "string",
+            "description": "The whole key. Shown once, never stored."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "prefix",
+          "createdAt",
+          "revokedAt",
+          "key"
+        ]
+      },
+      "FlagKind": {
+        "type": "string",
+        "enum": [
+          "boolean",
+          "string",
+          "number",
+          "json"
+        ]
+      },
+      "VariationDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "description": "Any JSON value.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ],
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "FlagStateSummaryDto": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          },
+          "killed": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "rules": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "on",
+          "killed",
+          "version",
+          "rules"
+        ]
+      },
+      "FlagListItemDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagKind"
+              }
+            ]
+          },
+          "variations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariationDto"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "integer"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/FlagStateSummaryDto"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "kind",
+          "variations",
+          "tags",
+          "version",
+          "archived",
+          "createdAt",
+          "updatedAt",
+          "state"
+        ]
+      },
+      "CreateFlagDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagKind"
+              }
+            ]
+          },
+          "variations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariationDto"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "kind",
+          "variations"
+        ]
+      },
+      "FlagDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagKind"
+              }
+            ]
+          },
+          "variations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariationDto"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "integer"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "kind",
+          "variations",
+          "tags",
+          "version",
+          "archived",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateFlagDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "variations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariationDto"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "variations",
+          "tags"
+        ]
+      },
+      "ServeVariationDto": {
+        "type": "object",
+        "properties": {
+          "variation": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "variation"
+        ]
+      },
+      "WeightedVariationDto": {
+        "type": "object",
+        "properties": {
+          "variation": {
+            "type": "integer"
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "description": "Share of 10,000 buckets."
+          }
+        },
+        "required": [
+          "variation",
+          "weight"
+        ]
+      },
+      "RolloutDto": {
+        "type": "object",
+        "properties": {
+          "variations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeightedVariationDto"
+            }
+          },
+          "bucketBy": {
+            "type": "string",
+            "description": "Context attribute to bucket by. Defaults to key."
+          }
+        },
+        "required": [
+          "variations"
+        ]
+      },
+      "ServeRolloutDto": {
+        "type": "object",
+        "properties": {
+          "rollout": {
+            "$ref": "#/components/schemas/RolloutDto"
+          }
+        },
+        "required": [
+          "rollout"
+        ]
+      },
+      "TargetDto": {
+        "type": "object",
+        "properties": {
+          "variation": {
+            "type": "integer"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "variation",
+          "values"
+        ]
+      },
+      "ClauseOp": {
+        "type": "string",
+        "enum": [
+          "in",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "lt",
+          "lte",
+          "gt",
+          "gte",
+          "before",
+          "after"
+        ]
+      },
+      "ClauseDto": {
+        "type": "object",
+        "properties": {
+          "attribute": {
+            "type": "string",
+            "example": "country"
+          },
+          "op": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClauseOp"
+              }
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "negate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "attribute",
+          "op",
+          "values"
+        ]
+      },
+      "RuleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "clauses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClauseDto"
+            }
+          },
+          "serve": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServeVariationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServeRolloutDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "clauses",
+          "serve"
+        ]
+      },
+      "FlagStateDto": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "on": {
+            "type": "boolean"
+          },
+          "killed": {
+            "type": "boolean"
+          },
+          "offVariation": {
+            "type": "integer"
+          },
+          "fallthrough": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServeVariationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServeRolloutDto"
+              }
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetDto"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleDto"
+            }
+          },
+          "version": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "environment",
+          "on",
+          "killed",
+          "offVariation",
+          "fallthrough",
+          "targets",
+          "rules",
+          "version",
+          "updatedAt"
+        ]
+      },
+      "UpdateFlagStateDto": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          },
+          "offVariation": {
+            "type": "integer"
+          },
+          "fallthrough": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServeVariationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServeRolloutDto"
+              }
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetDto"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleDto"
+            }
+          }
+        },
+        "required": [
+          "on",
+          "offVariation",
+          "fallthrough",
+          "targets",
+          "rules"
+        ]
+      },
+      "KillDto": {
+        "type": "object",
+        "properties": {
+          "killed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "killed"
+        ]
+      },
+      "ScheduledChangeBodyDto": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean"
+          },
+          "fallthrough": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServeVariationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServeRolloutDto"
+              }
+            ]
+          }
+        }
+      },
+      "ScheduledChangeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "runAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "change": {
+            "$ref": "#/components/schemas/ScheduledChangeBodyDto"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "done",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "executedAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "environment",
+          "runAt",
+          "change",
+          "status",
+          "executedAt",
+          "error"
+        ]
+      },
+      "CreateScheduleDto": {
+        "type": "object",
+        "properties": {
+          "runAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "change": {
+            "$ref": "#/components/schemas/ScheduledChangeBodyDto"
+          }
+        },
+        "required": [
+          "runAt",
+          "change"
+        ]
+      },
+      "WebhookDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "*",
+                "flag.created",
+                "flag.updated",
+                "flag.archived",
+                "flag.state.updated",
+                "flag.killed",
+                "flag.unkilled",
+                "flag.schedule.created",
+                "flag.schedule.cancelled",
+                "flag.schedule.executed"
+              ]
+            }
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "url",
+          "events",
+          "active",
+          "createdAt"
+        ]
+      },
+      "CreateWebhookDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://hooks.example.com/flagken"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "*",
+                "flag.created",
+                "flag.updated",
+                "flag.archived",
+                "flag.state.updated",
+                "flag.killed",
+                "flag.unkilled",
+                "flag.schedule.created",
+                "flag.schedule.cancelled",
+                "flag.schedule.executed"
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "url",
+          "events"
+        ]
+      },
+      "CreatedWebhookDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "*",
+                "flag.created",
+                "flag.updated",
+                "flag.archived",
+                "flag.state.updated",
+                "flag.killed",
+                "flag.unkilled",
+                "flag.schedule.created",
+                "flag.schedule.cancelled",
+                "flag.schedule.executed"
+              ]
+            }
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string",
+            "description": "HMAC-SHA256 signing secret. Shown once."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "url",
+          "events",
+          "active",
+          "createdAt",
+          "secret"
+        ]
+      },
+      "UpdateWebhookDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://hooks.example.com/flagken"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "*",
+                "flag.created",
+                "flag.updated",
+                "flag.archived",
+                "flag.state.updated",
+                "flag.killed",
+                "flag.unkilled",
+                "flag.schedule.created",
+                "flag.schedule.cancelled",
+                "flag.schedule.executed"
+              ]
+            }
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "url",
+          "events",
+          "active"
+        ]
+      },
+      "WebhookDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "attempt": {
+            "type": "integer"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "statusCode": {
+            "type": "integer",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "eventId",
+          "eventType",
+          "attempt",
+          "ok",
+          "statusCode",
+          "error",
+          "durationMs",
+          "createdAt"
+        ]
+      },
+      "WebhookTestDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId"
+        ]
+      },
+      "AuditActorDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "user",
+              "api_key",
+              "system"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "label"
+        ]
+      },
+      "AuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditActorDto"
+          },
+          "action": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string",
+            "nullable": true
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "resourceKey": {
+            "type": "string"
+          },
+          "before": {
+            "description": "Any JSON value.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ],
+            "nullable": true
+          },
+          "after": {
+            "description": "Any JSON value.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "actor",
+          "action",
+          "environment",
+          "resourceType",
+          "resourceKey",
+          "before",
+          "after"
+        ]
+      },
+      "FlagConfigDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagKind"
+              }
+            ]
+          },
+          "variations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariationDto"
+            }
+          },
+          "version": {
+            "type": "integer"
+          },
+          "on": {
+            "type": "boolean"
+          },
+          "killed": {
+            "type": "boolean"
+          },
+          "offVariation": {
+            "type": "integer"
+          },
+          "fallthrough": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServeVariationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServeRolloutDto"
+              }
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetDto"
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleDto"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "variations",
+          "version",
+          "on",
+          "killed",
+          "offVariation",
+          "fallthrough",
+          "targets",
+          "rules"
+        ]
+      },
+      "SdkFlagsDto": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlagConfigDto"
+            }
+          }
+        },
+        "required": [
+          "environment",
+          "flags"
+        ]
+      },
+      "EvalContextDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Opaque id for the user or device. Never a name or e-mail address.",
+            "example": "u_7f3a9c"
+          },
+          "attributes": {
+            "type": "object",
+            "description": "Attributes rules can match on.",
+            "additionalProperties": true,
+            "example": {
+              "country": "CA",
+              "plan": "beta"
+            }
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "EvalReasonDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "OFF",
+              "KILLED",
+              "TARGET_MATCH",
+              "RULE_MATCH",
+              "FALLTHROUGH",
+              "ERROR"
+            ]
+          },
+          "ruleId": {
+            "type": "string"
+          },
+          "ruleIndex": {
+            "type": "integer"
+          },
+          "bucket": {
+            "type": "integer"
+          },
+          "errorKind": {
+            "type": "string",
+            "enum": [
+              "FLAG_NOT_FOUND",
+              "MALFORMED_FLAG"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "EvaluatedFlagDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "description": "Any JSON value.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ],
+            "nullable": true
+          },
+          "variation": {
+            "type": "integer",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/EvalReasonDto"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "variation",
+          "version",
+          "reason"
+        ]
+      },
+      "SdkEvaluationDto": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvaluatedFlagDto"
+            }
+          }
+        },
+        "required": [
+          "environment",
+          "flags"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "session": []
+    }
+  ]
+}
