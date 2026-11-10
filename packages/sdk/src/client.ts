@@ -162,6 +162,24 @@ export class FlagkenClient {
     return result;
   }
 
+  /**
+   * Calls listener with the new value each time the value of 1 flag changes for a context (server mode) or for the
+   * identified context (client mode). A change to the flag that leaves the value the same, such as a new rule that
+   * this context does not match, makes no call. Returns a function that stops the calls.
+   */
+  watch<T extends JsonValue>(key: string, fallback: T, listener: (value: Widen<T>) => void, context?: EvalContext): () => void {
+    if (this.mode === 'server' && !(context ?? this.context)) throw new Error('server mode needs a context to watch a flag');
+    let last = JSON.stringify(this.variation(key, fallback, context));
+    return this.on('change', (event) => {
+      if (event.key !== key) return;
+      const value = this.variation(key, fallback, context);
+      const text = JSON.stringify(value);
+      if (text === last) return;
+      last = text;
+      listener(value);
+    });
+  }
+
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];

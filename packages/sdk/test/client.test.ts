@@ -56,6 +56,49 @@ describe('server mode', () => {
     expect(client.variation('x', 'text', { key: 'u_1' })).toBe('text');
   });
 
+  it('watch calls back only when the value for the context changes', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout'), flag('other')] });
+    await started;
+
+    const seen: boolean[] = [];
+    const stop = client.watch('new-checkout', false, (value) => seen.push(value), { key: 'u_1', country: 'CA' });
+    // A rule for another country leaves u_1 on the fallthrough (true): no call.
+    stream.send(
+      'patch',
+      flag('new-checkout', {
+        version: 2,
+        rules: [{ id: 'us', clauses: [{ attribute: 'country', op: 'in', values: ['US'] }], serve: { variation: 0 } }],
+      }),
+    );
+    // Another flag changes: no call.
+    stream.send('patch', flag('other', { version: 2, on: false }));
+    // A target for u_1 serves false: 1 call.
+    stream.send('patch', flag('new-checkout', { version: 3, targets: [{ variation: 0, values: ['u_1'] }] }));
+    await waitFor(() => seen.length === 1);
+    expect(seen).toEqual([false]);
+
+    // The flag is removed: the fallback (false) is what u_1 already had, so no call.
+    stream.send('delete', { key: 'new-checkout', version: 4 });
+    await waitFor(() => client.allFlags().length === 1);
+    stream.send('patch', flag('new-checkout', { version: 5 }));
+    await waitFor(() => seen.length === 2);
+    expect(seen).toEqual([false, true]);
+
+    stop();
+    stream.send('patch', flag('new-checkout', { version: 6, on: false }));
+    await waitFor(() => client.variation('new-checkout', true, { key: 'u_1' }) === false);
+    expect(seen).toEqual([false, true]);
+  });
+
+  it('watch in server mode needs a context', () => {
+    const client = new FlagkenClient({ baseUrl: 'http://x', apiKey: SERVER_KEY });
+    expect(() => client.watch('new-checkout', false, () => {})).toThrow('server mode needs a context to watch a flag');
+  });
+
   it('refuses keys that are not flagken keys', () => {
     expect(() => new FlagkenClient({ baseUrl: 'http://x', apiKey: 'secret' })).toThrow(/fk_srv_/);
   });
@@ -107,6 +150,34 @@ describe('client mode', () => {
     await identified;
     expect(JSON.parse(Buffer.from(calls[1]!.headers['x-flagken-context']!, 'base64url').toString()).key).toBe('u_2');
     expect(client.variation('f', 0)).toBe(2);
+  });
+});
+
+describe('client mode watch', () => {
+  it('follows the value the server sends for the identified context', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(
+      new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: CLIENT_KEY, context: { key: 'u_7f3a9c' }, fetch: fetcher, ...fast }),
+    );
+    const seen: string[] = [];
+    client.watch('search-ranking', 'keyword', (value) => seen.push(value));
+    const started = client.start();
+    const evaluated = (value: string, version: number) => ({
+      key: 'search-ranking',
+      value,
+      variation: value === 'semantic' ? 1 : 0,
+      version,
+      reason: { kind: 'FALLTHROUGH' },
+    });
+    // The first data replaces the fallback.
+    stream.send('put', { environment: 'production', flags: [evaluated('semantic', 1)] });
+    await started;
+    // A new version with the same value makes no call.
+    stream.send('patch', evaluated('semantic', 2));
+    stream.send('patch', evaluated('keyword', 3));
+    await waitFor(() => seen.length === 2);
+    expect(seen).toEqual(['semantic', 'keyword']);
   });
 });
 
