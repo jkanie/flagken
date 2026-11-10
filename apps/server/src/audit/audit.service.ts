@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { Kysely } from 'kysely';
+import type { Kysely, Transaction } from 'kysely';
 import type { JsonValue } from '@flagken/shared';
 import { DB, json } from '../db/database.js';
 import type { AuditRow, Database } from '../db/schema.js';
 import { ChangeBus } from '../live/change-bus.js';
+import type { ChangeMessage } from '../live/change-bus.js';
 import { WebhookDispatcher } from '../webhooks/webhook-dispatcher.js';
 import type { WebhookEvent } from '../jobs/queues.js';
 import type { AuditRecord } from './audit-context.js';
@@ -87,6 +88,61 @@ export class AuditService {
       }
     }
     return rows;
+  }
+
+  /**
+   * Writes 1 audit entry and its outbox row inside the caller's transaction, so the change, its entry and its
+   * events commit together or not at all. The outbox relay publishes the messages and queues the webhooks after
+   * the commit. A flag change uses this. Other changes go through [write] after the request.
+   */
+  async writeInTransaction(
+    trx: Transaction<Database>,
+    record: AuditRecord,
+    actor: Actor,
+    requestId: string | null,
+    messages: ChangeMessage[],
+  ): Promise<AuditRow> {
+    const row = await trx
+      .insertInto('auditLog')
+      .values({
+        actorType: actor.type,
+        actorId: actor.id,
+        actorLabel: actor.label,
+        action: record.action,
+        projectId: record.projectId,
+        environmentKey: record.environmentKey,
+        resourceType: record.resourceType,
+        resourceKey: record.resourceKey,
+        before: json(record.before),
+        after: json(record.after),
+        requestId,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    const all: ChangeMessage[] = [...messages];
+    if (row.projectId && record.projectKey) {
+      all.push({
+        type: 'audit.created',
+        projectId: row.projectId,
+        projectKey: record.projectKey,
+        entry: {
+          id: row.id,
+          action: row.action,
+          environmentKey: row.environmentKey,
+          resourceKey: row.resourceKey,
+          actorLabel: row.actorLabel,
+          at: row.at.toISOString(),
+        },
+      });
+    }
+    await trx
+      .insertInto('outbox')
+      .values({
+        messages: json(all),
+        webhookAuditId: row.action.startsWith('flag.') && row.projectId ? row.id : null,
+      })
+      .execute();
+    return row;
   }
 
   async list(projectId: string, filter: { environment?: string; flag?: string; limit: number; before?: string }): Promise<AuditRow[]> {

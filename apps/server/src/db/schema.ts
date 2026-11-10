@@ -1,5 +1,6 @@
 import type { ColumnType, Generated, Insertable, Selectable } from 'kysely';
 import type { FlagKind, Role, ApiKeyKind, Rule, Serve, Target, Variation, JsonValue } from '@flagken/shared';
+import type { ChangeMessage } from '../live/change-bus.js';
 
 /** JSONB columns: read as objects, written as JSON text. */
 type Json<T> = ColumnType<T, string, string>;
@@ -131,6 +132,19 @@ export interface ScheduledChange {
   fallthrough?: Serve;
 }
 
+/** Events of a committed flag change, written in the same transaction, sent by the outbox relay. */
+export interface OutboxTable {
+  id: Generated<string>;
+  createdAt: Generated<Date>;
+  /** Change messages to publish on the Redis channel, in order. */
+  messages: Json<ChangeMessage[]>;
+  /** The audit entry whose webhooks the relay queues, for flag events. */
+  webhookAuditId: string | null;
+  attempts: Generated<number>;
+  lastError: string | null;
+  sentAt: Date | null;
+}
+
 export interface Database {
   users: UsersTable;
   projects: ProjectsTable;
@@ -139,6 +153,7 @@ export interface Database {
   flags: FlagsTable;
   flagStates: FlagStatesTable;
   auditLog: AuditLogTable;
+  outbox: OutboxTable;
   webhooks: WebhooksTable;
   webhookDeliveries: WebhookDeliveriesTable;
   scheduledChanges: ScheduledChangesTable;
@@ -151,5 +166,6 @@ export type ApiKeyRow = Selectable<ApiKeysTable>;
 export type FlagRow = Selectable<FlagsTable>;
 export type FlagStateRow = Selectable<FlagStatesTable>;
 export type AuditRow = Selectable<AuditLogTable>;
+export type OutboxRow = Selectable<OutboxTable>;
 export type WebhookRow = Selectable<WebhooksTable>;
 export type NewAuditRow = Insertable<AuditLogTable>;

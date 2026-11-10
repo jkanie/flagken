@@ -12,8 +12,11 @@ import type { FlagConfig, FlagEnvironmentState, FlagKind, JsonValue } from '@fla
 import { DB, json } from '../db/database.js';
 import type { Database, Environment, FlagRow, FlagStateRow, Project, ScheduledChange } from '../db/schema.js';
 import { AuditContext } from '../audit/audit-context.js';
-import type { AuditRecord } from '../audit/audit-context.js';
-import { ChangeBus } from '../live/change-bus.js';
+import type { AuditMeta, AuditRecord } from '../audit/audit-context.js';
+import { AuditService } from '../audit/audit.service.js';
+import type { Actor } from '../audit/audit.service.js';
+import { OutboxRelay } from '../audit/outbox-relay.js';
+import type { ChangeMessage } from '../live/change-bus.js';
 import { ProjectsService, initialState } from '../projects/projects.service.js';
 import type { FlagDto, FlagListItemDto, FlagStateDto } from '../common/dto.js';
 import { ShapeError, parseRules, parseServe, parseTargets, parseVariations } from './shape.js';
@@ -105,8 +108,19 @@ export class FlagsService {
   constructor(
     @Inject(DB) private readonly db: Kysely<Database>,
     private readonly projects: ProjectsService,
-    private readonly bus: ChangeBus,
+    private readonly auditLog: AuditService,
+    private readonly relay: OutboxRelay,
   ) {}
+
+  /**
+   * Stores the audit entry and the outbox row of 1 flag change in the change's own transaction. The relay sends
+   * the events after the commit, so a change never commits without its entry, and an entry never without its events.
+   */
+  private record(trx: Transaction<Database>, record: AuditRecord, message: ChangeMessage, meta?: AuditMeta) {
+    const anonymous: Actor = { type: 'system', id: null, label: 'anonymous' };
+    const who = meta ?? AuditContext.meta() ?? { actor: anonymous, requestId: null };
+    return this.auditLog.writeInTransaction(trx, record, who.actor, who.requestId, [message]);
+  }
 
   private async getFlagRow(project: Project, key: string, db: Kysely<Database> | Transaction<Database> = this.db) {
     const flag = await db.selectFrom('flags').selectAll().where('projectId', '=', project.id).where('key', '=', key).executeTakeFirst();
@@ -170,10 +184,14 @@ export class FlagsService {
         .insertInto('flagStates')
         .values(environments.map((e) => ({ flagId: created.id, environmentId: e.id, ...initialState(input.kind, variations) })))
         .execute();
+      await this.record(
+        trx,
+        this.audit('flag.created', project, null, created.key, null, flagAudit(created)),
+        this.changed(project, null, created.key, created.version, 'flag created'),
+      );
       return created;
     });
-    AuditContext.record(this.audit('flag.created', project, null, flag.key, null, flagAudit(flag)));
-    await this.publish(project, null, flag.key, flag.version, 'flag created');
+    await this.relay.drain();
     return toFlagDto(flag);
   }
 
@@ -185,7 +203,7 @@ export class FlagsService {
   ): Promise<FlagDto> {
     const project = await this.projects.getProject(projectKey);
     const variations = shape(() => parseVariations(input.variations));
-    const { before, after } = await this.db.transaction().execute(async (trx) => {
+    const after = await this.db.transaction().execute(async (trx) => {
       const before = await this.getFlagRow(project, key, trx);
       if (expected !== undefined && before.version !== expected) {
         throw new PreconditionFailedException(`flag ${key} changed since you read it (now version ${before.version})`);
@@ -220,25 +238,38 @@ export class FlagsService {
         .returningAll()
         .executeTakeFirst();
       if (!after) throw new PreconditionFailedException(`flag ${key} changed while saving`);
-      return { before, after };
+      await this.record(
+        trx,
+        this.audit('flag.updated', project, null, key, flagAudit(before), flagAudit(after)),
+        this.changed(project, null, key, after.version, 'flag updated'),
+      );
+      return after;
     });
-    AuditContext.record(this.audit('flag.updated', project, null, key, flagAudit(before), flagAudit(after)));
-    await this.publish(project, null, key, after.version, 'flag updated');
+    await this.relay.drain();
     return toFlagDto(after);
   }
 
   async archive(projectKey: string, key: string): Promise<void> {
     const project = await this.projects.getProject(projectKey);
-    const before = await this.getFlagRow(project, key);
-    if (before.archivedAt) return;
-    const after = await this.db
-      .updateTable('flags')
-      .set((eb) => ({ archivedAt: new Date(), version: eb('version', '+', 1), updatedAt: new Date() }))
-      .where('id', '=', before.id)
-      .returningAll()
-      .executeTakeFirstOrThrow();
-    AuditContext.record(this.audit('flag.archived', project, null, key, flagAudit(before), flagAudit(after)));
-    await this.publish(project, null, key, after.version, 'flag archived');
+    const archived = await this.db.transaction().execute(async (trx) => {
+      const before = await this.getFlagRow(project, key, trx);
+      if (before.archivedAt) return false;
+      const after = await trx
+        .updateTable('flags')
+        .set((eb) => ({ archivedAt: new Date(), version: eb('version', '+', 1), updatedAt: new Date() }))
+        .where('id', '=', before.id)
+        .where('archivedAt', 'is', null)
+        .returningAll()
+        .executeTakeFirst();
+      if (!after) return false;
+      await this.record(
+        trx,
+        this.audit('flag.archived', project, null, key, flagAudit(before), flagAudit(after)),
+        this.changed(project, null, key, after.version, 'flag archived'),
+      );
+      return true;
+    });
+    if (archived) await this.relay.drain();
   }
 
   async getState(projectKey: string, key: string, environmentKey: string): Promise<FlagStateDto> {
@@ -286,15 +317,15 @@ export class FlagsService {
     );
   }
 
-  /** Runs a scheduled change. Called by the BullMQ worker, outside any HTTP request. */
+  /** Runs a scheduled change. Called by the BullMQ worker, outside any HTTP request, so the caller names the actor. */
   async applyScheduledChange(
     projectKey: string,
     key: string,
     environmentKey: string,
     change: ScheduledChange,
-  ): Promise<{ dto: FlagStateDto; audit: AuditRecord }> {
-    let record: AuditRecord | undefined;
-    const dto = await this.changeState(
+    actor: Actor,
+  ): Promise<FlagStateDto> {
+    return this.changeState(
       projectKey,
       key,
       environmentKey,
@@ -306,9 +337,8 @@ export class FlagsService {
         ...(change.fallthrough !== undefined ? { fallthrough: change.fallthrough } : {}),
       }),
       { label: 'scheduled change' },
-      (r) => (record = r),
+      { actor, requestId: null },
     );
-    return { dto, audit: record! };
   }
 
   private async changeState(
@@ -319,12 +349,12 @@ export class FlagsService {
     expected: number | undefined,
     change: (current: FlagEnvironmentState) => FlagEnvironmentState,
     changer: Changer,
-    onAudit?: (record: AuditRecord) => void,
+    meta?: AuditMeta,
   ): Promise<FlagStateDto> {
     const { project, environment } = await this.projects.getEnvironment(projectKey, environmentKey);
     const flag = await this.getFlagRow(project, key);
     if (flag.archivedAt) throw new ConflictException(`flag ${key} is archived`);
-    const { before, after } = await this.db.transaction().execute(async (trx) => {
+    const after = await this.db.transaction().execute(async (trx) => {
       const before = await trx
         .selectFrom('flagStates')
         .selectAll()
@@ -357,12 +387,15 @@ export class FlagsService {
         .returningAll()
         .executeTakeFirst();
       if (!after) throw new PreconditionFailedException(`flag ${key} changed while saving`);
-      return { before, after };
+      await this.record(
+        trx,
+        this.audit(action, project, environment, key, stateAudit(before), stateAudit(after)),
+        this.changed(project, environment, key, flag.version + after.version, changer.label),
+        meta,
+      );
+      return after;
     });
-    const record = this.audit(action, project, environment, key, stateAudit(before), stateAudit(after));
-    if (onAudit) onAudit(record);
-    else AuditContext.record(record);
-    await this.publish(project, environment, key, flag.version + after.version, changer.label);
+    await this.relay.drain();
     return toStateDto(environmentKey, after);
   }
 
@@ -424,8 +457,8 @@ export class FlagsService {
     };
   }
 
-  private publish(project: Project, environment: Environment | null, flagKey: string, version: number, summary: string) {
-    return this.bus.publish({
+  private changed(project: Project, environment: Environment | null, flagKey: string, version: number, summary: string): ChangeMessage {
+    return {
       type: 'flag.changed',
       projectId: project.id,
       projectKey: project.key,
@@ -434,6 +467,6 @@ export class FlagsService {
       flagKey,
       version,
       summary,
-    });
+    };
   }
 }

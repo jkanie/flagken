@@ -130,6 +130,25 @@ const migrations: Record<string, Migration> = {
       `.execute(db);
     },
   },
+  '0002_outbox': {
+    async up(db: Kysely<unknown>): Promise<void> {
+      await sql`
+        create table outbox (
+          id bigint generated always as identity primary key,
+          created_at timestamptz not null default now(),
+          messages jsonb not null,
+          webhook_audit_id bigint references audit_log(id) on delete cascade,
+          attempts integer not null default 0,
+          last_error text,
+          sent_at timestamptz
+        );
+        create index outbox_unsent on outbox (id) where sent_at is null;
+      `.execute(db);
+    },
+    async down(db: Kysely<unknown>): Promise<void> {
+      await sql`drop table outbox;`.execute(db);
+    },
+  },
 };
 
 const provider: MigrationProvider = { getMigrations: async () => migrations };

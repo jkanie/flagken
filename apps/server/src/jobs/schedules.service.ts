@@ -14,7 +14,6 @@ import { validateEnvironmentState } from '@flagken/shared';
 import { DB, json } from '../db/database.js';
 import type { Database, ScheduledChange } from '../db/schema.js';
 import { AuditContext } from '../audit/audit-context.js';
-import { AuditService } from '../audit/audit.service.js';
 import { FlagsService } from '../flags/flags.service.js';
 import { ShapeError, parseServe } from '../flags/shape.js';
 import { ProjectsService } from '../projects/projects.service.js';
@@ -33,7 +32,6 @@ export class SchedulesService {
     @InjectQueue(SCHEDULE_QUEUE) private readonly queue: Queue<ScheduleJob>,
     private readonly projects: ProjectsService,
     private readonly flags: FlagsService,
-    private readonly audit: AuditService,
   ) {}
 
   private async locate(projectKey: string, flagKey: string, environmentKey: string) {
@@ -174,16 +172,12 @@ export class SchedulesService {
       .executeTakeFirst();
     if (!row || row.status !== 'pending') return 'skipped';
     try {
-      const { audit } = await this.flags.applyScheduledChange(row.projectKey, row.flagKey, row.environmentKey, row.change);
-      await this.audit.write(
-        [audit],
-        {
-          type: 'system',
-          id: null,
-          label: `scheduled change ${row.id}${row.createdByEmail ? ` set by ${row.createdByEmail}` : ''}`,
-        },
-        null,
-      );
+      // The audit entry is written in the change's own transaction, with the scheduler as the actor.
+      await this.flags.applyScheduledChange(row.projectKey, row.flagKey, row.environmentKey, row.change, {
+        type: 'system',
+        id: null,
+        label: `scheduled change ${row.id}${row.createdByEmail ? ` set by ${row.createdByEmail}` : ''}`,
+      });
       await this.db.updateTable('scheduledChanges').set({ status: 'done', executedAt: new Date() }).where('id', '=', row.id).execute();
       return 'done';
     } catch (error) {

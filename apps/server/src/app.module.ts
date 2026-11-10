@@ -22,6 +22,7 @@ import { UsersService } from './auth/users.service.js';
 import { AuditController } from './audit/audit.controller.js';
 import { AuditInterceptor } from './audit/audit.interceptor.js';
 import { AuditService } from './audit/audit.service.js';
+import { OutboxRelay } from './audit/outbox-relay.js';
 import { FlagsController } from './flags/flags.controller.js';
 import { FlagsService } from './flags/flags.service.js';
 import { HealthController } from './health/health.controller.js';
@@ -131,6 +132,7 @@ export class AppModule {
         FlagsService,
         SchedulesService,
         AuditService,
+        OutboxRelay,
         WebhookDispatcher,
         WebhooksService,
         ChangeBus,

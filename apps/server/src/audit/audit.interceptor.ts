@@ -25,6 +25,7 @@ export class AuditInterceptor implements NestInterceptor {
     if (context.getType() !== 'http') return next.handle();
     const request = context.switchToHttp().getRequest<FlagkenRequest>();
     if (request.method === 'GET' || request.method === 'HEAD' || request.method === 'OPTIONS') return next.handle();
+    const meta = { actor: actorOf(request), requestId: request.requestId ?? null };
     return new Observable((subscriber) =>
       AuditContext.run(() => {
         const records = AuditContext.current();
@@ -32,12 +33,12 @@ export class AuditInterceptor implements NestInterceptor {
           .handle()
           .pipe(
             mergeMap(async (body: unknown) => {
-              await this.audit.write(records, actorOf(request), request.requestId ?? null);
+              await this.audit.write(records, meta.actor, meta.requestId);
               return body;
             }),
           )
           .subscribe(subscriber);
-      }),
+      }, meta),
     );
   }
 }
