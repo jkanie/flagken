@@ -180,6 +180,26 @@ export class FlagkenClient {
     });
   }
 
+  /**
+   * The value of every flag for a context (server mode) or for the identified context (client mode), keyed by flag
+   * key in key order, such as for a page that the server renders to hand to its browser code. A flag that cannot be
+   * evaluated (a variation index that does not exist) is left out, where variation would answer with its fall-back.
+   */
+  allValues(context?: EvalContext): Record<string, JsonValue> {
+    const target = context ?? this.context;
+    if (this.mode === 'server' && !target) throw new Error('server mode needs a context for allValues');
+    const out: Record<string, JsonValue> = {};
+    for (const key of [...this.flags.keys()].sort()) {
+      const flag = this.flags.get(key);
+      const result =
+        this.mode === 'server'
+          ? evaluateFlag(flag as FlagConfig, target!, null)
+          : { value: (flag as EvaluatedFlag).value, reason: (flag as EvaluatedFlag).reason };
+      if (result.reason.kind !== 'ERROR') out[key] = result.value;
+    }
+    return out;
+  }
+
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];

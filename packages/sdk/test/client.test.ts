@@ -66,7 +66,7 @@ describe('server mode', () => {
 
     const seen: boolean[] = [];
     const stop = client.watch('new-checkout', false, (value) => seen.push(value), { key: 'u_1', country: 'CA' });
-    // A rule for another country leaves u_1 on the fallthrough (true): no call.
+    // A rule for another country leaves u_1 on the fall-through (true): no call.
     stream.send(
       'patch',
       flag('new-checkout', {
@@ -81,7 +81,7 @@ describe('server mode', () => {
     await waitFor(() => seen.length === 1);
     expect(seen).toEqual([false]);
 
-    // The flag is removed: the fallback (false) is what u_1 already had, so no call.
+    // The flag is removed: the fall-back (false) is what u_1 already had, so no call.
     stream.send('delete', { key: 'new-checkout', version: 4 });
     await waitFor(() => client.allFlags().length === 1);
     stream.send('patch', flag('new-checkout', { version: 5 }));
@@ -92,6 +92,26 @@ describe('server mode', () => {
     stream.send('patch', flag('new-checkout', { version: 6, on: false }));
     await waitFor(() => client.variation('new-checkout', true, { key: 'u_1' }) === false);
     expect(seen).toEqual([false, true]);
+  });
+
+  it('allValues evaluates every flag for 1 context, in key order', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', {
+      environment: 'production',
+      flags: [
+        flag('new-checkout', { targets: [{ variation: 0, values: ['u_1'] }] }),
+        flag('a-off', { on: false }),
+        flag('broken', { fallthrough: { variation: 7 } }),
+      ],
+    });
+    await started;
+    expect(Object.keys(client.allValues({ key: 'u_1' }))).toEqual(['a-off', 'new-checkout']);
+    expect(client.allValues({ key: 'u_1' })).toEqual({ 'a-off': false, 'new-checkout': false });
+    expect(client.allValues({ key: 'u_2' })).toEqual({ 'a-off': false, 'new-checkout': true });
+    expect(() => client.allValues()).toThrow('server mode needs a context for allValues');
   });
 
   it('watch in server mode needs a context', () => {
@@ -170,9 +190,10 @@ describe('client mode watch', () => {
       version,
       reason: { kind: 'FALLTHROUGH' },
     });
-    // The first data replaces the fallback.
+    // The 1st data replaces the fall-back.
     stream.send('put', { environment: 'production', flags: [evaluated('semantic', 1)] });
     await started;
+    expect(client.allValues()).toEqual({ 'search-ranking': 'semantic' });
     // A new version with the same value makes no call.
     stream.send('patch', evaluated('semantic', 2));
     stream.send('patch', evaluated('keyword', 3));
