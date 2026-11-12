@@ -114,6 +114,48 @@ describe('server mode', () => {
     expect(() => client.allValues()).toThrow('server mode needs a context for allValues');
   });
 
+  it('watchAll calls back once per change of the values for the context', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout'), flag('other')] });
+    await started;
+
+    const seen: Record<string, unknown>[] = [];
+    const stop = client.watchAll((values) => seen.push(values), { key: 'u_1', country: 'CA' });
+    // A rule for another country leaves both values as they were: no call.
+    stream.send(
+      'patch',
+      flag('other', {
+        version: 2,
+        rules: [{ id: 'us', clauses: [{ attribute: 'country', op: 'in', values: ['US'] }], serve: { variation: 0 } }],
+      }),
+    );
+    stream.send('patch', flag('other', { version: 3, on: false }));
+    await waitFor(() => seen.length === 1);
+    expect(seen).toEqual([{ 'new-checkout': true, other: false }]);
+
+    // A new snap-shot that changes both flags and adds 1 makes 1 call.
+    stream.send('put', {
+      environment: 'production',
+      flags: [flag('new-checkout', { version: 9, on: false }), flag('other', { version: 9 }), flag('added')],
+    });
+    await waitFor(() => seen.length === 2);
+    expect(seen[1]).toEqual({ added: true, 'new-checkout': false, other: true });
+
+    // A removed flag drops out of the values.
+    stream.send('delete', { key: 'added', version: 10 });
+    await waitFor(() => seen.length === 3);
+    expect(seen[2]).toEqual({ 'new-checkout': false, other: true });
+
+    stop();
+    stream.send('patch', flag('other', { version: 11, on: false }));
+    await waitFor(() => client.variation('other', true, { key: 'u_1' }) === false);
+    expect(seen).toHaveLength(3);
+    expect(() => client.watchAll(() => {})).toThrow('server mode needs a context to watch flags');
+  });
+
   it('watch in server mode needs a context', () => {
     const client = new FlagkenClient({ baseUrl: 'http://x', apiKey: SERVER_KEY });
     expect(() => client.watch('new-checkout', false, () => {})).toThrow('server mode needs a context to watch a flag');

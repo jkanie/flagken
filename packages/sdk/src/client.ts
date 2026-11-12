@@ -200,6 +200,24 @@ export class FlagkenClient {
     return out;
   }
 
+  /**
+   * Calls listener with allValues for a context (server mode) or for the identified context (client mode) each time
+   * a change alters 1 or more of those values, such as to send the new values to a page. A change that leaves every
+   * value the same makes no call, and a full snap-shot that changes several flags makes 1 call. Returns a function
+   * that stops the calls.
+   */
+  watchAll(listener: (values: Record<string, JsonValue>) => void, context?: EvalContext): () => void {
+    if (this.mode === 'server' && !(context ?? this.context)) throw new Error('server mode needs a context to watch flags');
+    let last = JSON.stringify(this.allValues(context));
+    return this.on('change', () => {
+      const values = this.allValues(context);
+      const text = JSON.stringify(values);
+      if (text === last) return;
+      last = text;
+      listener(values);
+    });
+  }
+
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];
