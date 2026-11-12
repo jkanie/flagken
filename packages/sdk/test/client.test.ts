@@ -114,6 +114,32 @@ describe('server mode', () => {
     expect(() => client.allValues()).toThrow('server mode needs a context for allValues');
   });
 
+  it('allDetails keeps every flag with its variation and reason, errors too', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', {
+      environment: 'production',
+      flags: [
+        flag('new-checkout', { targets: [{ variation: 0, values: ['u_1'] }] }),
+        flag('a-off', { on: false }),
+        flag('broken', { fallthrough: { variation: 7 } }),
+      ],
+    });
+    await started;
+    const details = client.allDetails({ key: 'u_1' });
+    expect(Object.keys(details)).toEqual(['a-off', 'broken', 'new-checkout']);
+    expect(details).toEqual({
+      'a-off': { value: false, variation: 0, reason: { kind: 'OFF' } },
+      // allValues leaves this flag out. allDetails keeps it, with the error.
+      broken: { value: null, variation: null, reason: { kind: 'ERROR', errorKind: 'MALFORMED_FLAG' } },
+      'new-checkout': { value: false, variation: 0, reason: { kind: 'TARGET_MATCH' } },
+    });
+    expect(client.allDetails({ key: 'u_2' })['new-checkout']).toEqual({ value: true, variation: 1, reason: { kind: 'FALLTHROUGH' } });
+    expect(() => client.allDetails()).toThrow('server mode needs a context for allDetails');
+  });
+
   it('watchAll calls back once per change of the values for the context', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
@@ -258,6 +284,8 @@ describe('client mode watch', () => {
     stream.send('put', { environment: 'production', flags: [evaluated('semantic', 1)] });
     await started;
     expect(client.allValues()).toEqual({ 'search-ranking': 'semantic' });
+    // In client mode the details are the server's, for the identified context.
+    expect(client.allDetails()).toEqual({ 'search-ranking': { value: 'semantic', variation: 1, reason: { kind: 'FALLTHROUGH' } } });
     // A new version with the same value makes no call.
     stream.send('patch', evaluated('semantic', 2));
     stream.send('patch', evaluated('keyword', 3));

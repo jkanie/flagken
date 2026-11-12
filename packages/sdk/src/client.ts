@@ -207,18 +207,31 @@ export class FlagkenClient {
    * evaluated (a variation index that does not exist) is left out, where variation would answer with its fall-back.
    */
   allValues(context?: EvalContext): Record<string, JsonValue> {
-    const target = context ?? this.context;
-    if (this.mode === 'server' && !target) throw new Error('server mode needs a context for allValues');
     const out: Record<string, JsonValue> = {};
-    for (const key of [...this.flags.keys()].sort()) {
-      const flag = this.flags.get(key);
-      const result =
-        this.mode === 'server'
-          ? evaluateFlag(flag as FlagConfig, target!, null)
-          : { value: (flag as EvaluatedFlag).value, reason: (flag as EvaluatedFlag).reason };
+    for (const [key, result] of this.evaluateAll(context, 'allValues')) {
       if (result.reason.kind !== 'ERROR') out[key] = result.value;
     }
     return out;
+  }
+
+  /**
+   * The value, variation index, reason of every flag for a context (server mode) or for the identified context
+   * (client mode), in key order, such as for a page that shows why each user sees what they see. Unlike allValues,
+   * a flag that cannot be evaluated is kept, with its ERROR reason and a null value.
+   */
+  allDetails(context?: EvalContext): Record<string, EvalResult<JsonValue>> {
+    return Object.fromEntries(this.evaluateAll(context, 'allDetails'));
+  }
+
+  private evaluateAll(context: EvalContext | undefined, method: string): [string, EvalResult<JsonValue>][] {
+    const target = context ?? this.context;
+    if (this.mode === 'server' && !target) throw new Error(`server mode needs a context for ${method}`);
+    return [...this.flags.keys()].sort().map((key) => {
+      const flag = this.flags.get(key);
+      if (this.mode === 'server') return [key, evaluateFlag(flag as FlagConfig, target!, null)];
+      const evaluated = flag as EvaluatedFlag;
+      return [key, { value: evaluated.value, variation: evaluated.variation, reason: evaluated.reason }];
+    });
   }
 
   /**
