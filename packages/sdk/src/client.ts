@@ -124,6 +124,27 @@ export class FlagkenClient {
     return () => this.listeners[event].delete(listener);
   }
 
+  /**
+   * Resolves true once the status is `status` (at once when it already is), or false after timeoutMs. start() may
+   * resolve on a snap-shot or a time-out, so a readiness check that needs live data can wait for 'live' this way.
+   */
+  waitForStatus(status: ClientStatus, timeoutMs: number): Promise<boolean> {
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new RangeError('timeoutMs must be a number of 0 or more');
+    if (this.currentStatus === status) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const stop = this.on('status', (next) => {
+        if (next !== status) return;
+        clearTimeout(timer);
+        stop();
+        resolve(true);
+      });
+      const timer = setTimeout(() => {
+        stop();
+        resolve(false);
+      }, timeoutMs);
+    });
+  }
+
   /** Loads the snapshot, then connects. Resolves on the first data from the server or after startTimeoutMs. */
   async start(): Promise<void> {
     if (this.loop) return this.ready();

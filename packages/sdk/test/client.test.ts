@@ -156,6 +156,28 @@ describe('server mode', () => {
     expect(() => client.watchAll(() => {})).toThrow('server mode needs a context to watch flags');
   });
 
+  it('waitForStatus resolves on the status, or false after the time-out', async () => {
+    const stream = new FakeStream();
+    const { fetcher, calls } = fakeFetch([() => Promise.reject(new TypeError('connect ECONNREFUSED')), () => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    client.on('error', () => {});
+    expect(client.status).toBe('idle');
+    await expect(client.waitForStatus('idle', 0)).resolves.toBe(true);
+    await expect(client.waitForStatus('live', 20)).resolves.toBe(false);
+    expect(() => client.waitForStatus('live', -1)).toThrow(RangeError);
+    expect(() => client.waitForStatus('live', Number.NaN)).toThrow(RangeError);
+
+    const live = client.waitForStatus('live', 5000);
+    // A status on the way, such as offline after the 1st failed connect, does not end the wait.
+    const offline = client.waitForStatus('offline', 5000);
+    await client.start();
+    await expect(offline).resolves.toBe(true);
+    await waitFor(() => calls.length === 2);
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout')] });
+    await expect(live).resolves.toBe(true);
+    await expect(client.waitForStatus('live', 0)).resolves.toBe(true);
+  });
+
   it('watch in server mode needs a context', () => {
     const client = new FlagkenClient({ baseUrl: 'http://x', apiKey: SERVER_KEY });
     expect(() => client.watch('new-checkout', false, () => {})).toThrow('server mode needs a context to watch a flag');
