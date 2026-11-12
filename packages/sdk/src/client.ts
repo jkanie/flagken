@@ -252,6 +252,14 @@ export class FlagkenClient {
     });
   }
 
+  /**
+   * Whether the SDK holds a flag with this key now, such as to tell a flag that was never created (or was deleted)
+   * from 1 that answers with its fall-back. It reads no context, so it works the same in both modes.
+   */
+  has(key: string): boolean {
+    return this.flags.has(key);
+  }
+
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];

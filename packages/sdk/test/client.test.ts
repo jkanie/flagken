@@ -140,6 +140,22 @@ describe('server mode', () => {
     expect(() => client.allDetails()).toThrow('server mode needs a context for allDetails');
   });
 
+  it('has tells whether the SDK holds a flag, before and after a delete', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout'), flag('a-off', { on: false })] });
+    await started;
+    expect(client.has('new-checkout')).toBe(true);
+    // A flag that is off is still held.
+    expect(client.has('a-off')).toBe(true);
+    expect(client.has('missing')).toBe(false);
+    stream.send('delete', { key: 'new-checkout', version: 2 });
+    await waitFor(() => !client.has('new-checkout'));
+    expect(client.variationDetail('new-checkout', false, { key: 'u_1' }).reason).toEqual({ kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' });
+  });
+
   it('watchAll calls back once per change of the values for the context', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
