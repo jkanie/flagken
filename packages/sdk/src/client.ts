@@ -104,7 +104,16 @@ export class FlagkenClient {
     else if (options.apiKey.startsWith('fk_cli_')) this.mode = 'client';
     else throw new Error('apiKey must be a flagken server key (fk_srv_) or client key (fk_cli_)');
     if (this.mode === 'client' && !options.context) throw new Error('a client key needs a context with a key');
-    this.options = { streaming: true, pollIntervalMs: 30_000, startTimeoutMs: 5000, idleTimeoutMs: 45_000, ...options };
+    // A time left out, or given as undefined, keeps its default. Node runs a timer of 0, below 0, NaN, Infinity after
+    // about 1 ms, which would make a busy loop, so the constructor refuses such a time.
+    const times = { pollIntervalMs: 30_000, startTimeoutMs: 5000, idleTimeoutMs: 45_000 };
+    for (const name of ['pollIntervalMs', 'startTimeoutMs', 'idleTimeoutMs'] as const) {
+      const value = options[name];
+      if (value === undefined) continue;
+      if (!Number.isFinite(value) || value <= 0) throw new RangeError(`${name} must be a number above 0`);
+      times[name] = value;
+    }
+    this.options = { ...options, streaming: options.streaming ?? true, ...times };
     this.context = options.context;
     this.store = options.store ?? memoryStore();
     this.api = createApiClient({

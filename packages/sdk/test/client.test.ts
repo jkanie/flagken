@@ -156,6 +156,26 @@ describe('server mode', () => {
     expect(client.variationDetail('new-checkout', false, { key: 'u_1' }).reason).toEqual({ kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' });
   });
 
+  it('refuses a time option that is not above 0, and keeps the default for undefined', async () => {
+    const base = { baseUrl: 'http://flags.test', apiKey: SERVER_KEY };
+    for (const name of ['pollIntervalMs', 'startTimeoutMs', 'idleTimeoutMs'] as const) {
+      for (const bad of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+        expect(() => new FlagkenClient({ ...base, [name]: bad }), `${name}: ${bad}`).toThrow(
+          new RangeError(`${name} must be a number above 0`),
+        );
+      }
+    }
+    // startTimeoutMs: undefined once made start() resolve at once. It now waits the default 5 s for a stream that sends nothing.
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ ...base, fetch: fetcher, startTimeoutMs: undefined }));
+    const first = await Promise.race([
+      client.start().then(() => 'start'),
+      new Promise((resolve) => setTimeout(() => resolve('timer'), 200)),
+    ]);
+    expect(first).toBe('timer');
+  });
+
   it('watchAll calls back once per change of the values for the context', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
