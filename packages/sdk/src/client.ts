@@ -292,12 +292,16 @@ export class FlagkenClient {
   /** 1 request through the generated API client: all flags for a server key, or values for a client key. */
   async refresh(): Promise<void> {
     if (this.mode === 'server') {
-      const { data, error } = await this.api.GET('/sdk/v1/flags');
-      if (error || !data) throw new Error('could not read flags');
+      const { data, error, response } = await this.api.GET('/sdk/v1/flags');
+      // The HTTP status tells a wrong key (401) from a server fault (5xx) in the 'error' event and in the rejection.
+      // It is read before the check, which narrows the result too far for the compiler to see response after it.
+      const { status } = response;
+      if (error || !data) throw new Error(`could not read flags (HTTP ${status})`);
       this.replace(data.environment, data.flags as FlagConfig[], true);
     } else {
-      const { data, error } = await this.api.POST('/sdk/v1/evaluate', { body: wireContext(this.context!) });
-      if (error || !data) throw new Error('could not evaluate flags');
+      const { data, error, response } = await this.api.POST('/sdk/v1/evaluate', { body: wireContext(this.context!) });
+      const { status } = response;
+      if (error || !data) throw new Error(`could not evaluate flags (HTTP ${status})`);
       this.replace(data.environment, data.flags as EvaluatedFlag[], true);
     }
   }

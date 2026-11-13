@@ -176,6 +176,21 @@ describe('server mode', () => {
     expect(first).toBe('timer');
   });
 
+  it('refresh names the HTTP status when the server refuses, in both modes', async () => {
+    const problem = (status: number) => () =>
+      new Response(JSON.stringify({ error: 'no' }), { status, headers: { 'content-type': 'application/json' } });
+    const { fetcher } = fakeFetch([problem(401), problem(503)]);
+    const server = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    await expect(server.refresh()).rejects.toThrow(new Error('could not read flags (HTTP 401)'));
+    await expect(server.refresh()).rejects.toThrow(new Error('could not read flags (HTTP 503)'));
+
+    const { fetcher: clientFetch } = fakeFetch([problem(403)]);
+    const client = track(
+      new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: CLIENT_KEY, context: { key: 'u_1' }, fetch: clientFetch, ...fast }),
+    );
+    await expect(client.refresh()).rejects.toThrow(new Error('could not evaluate flags (HTTP 403)'));
+  });
+
   it('watchAll calls back once per change of the values for the context', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
