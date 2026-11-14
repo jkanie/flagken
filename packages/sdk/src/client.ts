@@ -272,6 +272,14 @@ export class FlagkenClient {
     return this.flags.has(key);
   }
 
+  /**
+   * The keys of the flags the SDK holds now, in the key order of allValues and allDetails, such as for a page that
+   * lists every flag. It reads no context, so it works the same in both modes, and it keeps a flag that is off.
+   */
+  keys(): string[] {
+    return [...this.flags.keys()].sort();
+  }
+
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];

@@ -156,6 +156,28 @@ describe('server mode', () => {
     expect(client.variationDetail('new-checkout', false, { key: 'u_1' }).reason).toEqual({ kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' });
   });
 
+  it('keys lists the held flags in key order', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    expect(client.keys()).toEqual([]);
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('zeta'), flag('new-checkout'), flag('a-off', { on: false })] });
+    await started;
+    // A flag that is off is listed, in the same order as allValues.
+    expect(client.keys()).toEqual(['a-off', 'new-checkout', 'zeta']);
+    expect(client.keys()).toEqual(Object.keys(client.allDetails({ key: 'u_1' })));
+    stream.send('patch', flag('beta', { version: 1 }));
+    await waitFor(() => client.keys().length === 4);
+    expect(client.keys()).toEqual(['a-off', 'beta', 'new-checkout', 'zeta']);
+    stream.send('delete', { key: 'zeta', version: 2 });
+    await waitFor(() => client.keys().length === 3);
+    expect(client.keys()).toEqual(['a-off', 'beta', 'new-checkout']);
+    // The list is a copy.
+    client.keys().pop();
+    expect(client.keys()).toHaveLength(3);
+  });
+
   it('updatedAt says when the flags last came from the server', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
