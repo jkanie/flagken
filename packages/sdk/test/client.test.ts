@@ -156,6 +156,36 @@ describe('server mode', () => {
     expect(client.variationDetail('new-checkout', false, { key: 'u_1' }).reason).toEqual({ kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' });
   });
 
+  it('updatedAt says when the flags last came from the server', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    expect(client.updatedAt).toBeNull();
+    const before = Date.now();
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout', { version: 3 })] });
+    await started;
+    const afterPut = client.updatedAt!;
+    expect(afterPut.getTime()).toBeGreaterThanOrEqual(before);
+    expect(afterPut.getTime()).toBeLessThanOrEqual(Date.now());
+    // The getter hands out a copy, so a caller cannot move the SDK's own time.
+    afterPut.setTime(0);
+    expect(client.updatedAt!.getTime()).toBeGreaterThanOrEqual(before);
+
+    const kept = client.updatedAt!.getTime();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    // An older patch changes nothing, so the time stays.
+    stream.send('patch', flag('new-checkout', { version: 2, on: false }));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(client.updatedAt!.getTime()).toBe(kept);
+    stream.send('patch', flag('new-checkout', { version: 4, on: false }));
+    await waitFor(() => client.updatedAt!.getTime() > kept);
+    const patched = client.updatedAt!.getTime();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    stream.send('delete', { key: 'new-checkout', version: 5 });
+    await waitFor(() => client.updatedAt!.getTime() > patched);
+  });
+
   it('refuses a time option that is not above 0, and keeps the default for undefined', async () => {
     const base = { baseUrl: 'http://flags.test', apiKey: SERVER_KEY };
     for (const name of ['pollIntervalMs', 'startTimeoutMs', 'idleTimeoutMs'] as const) {
@@ -369,10 +399,13 @@ describe('offline and reconnect', () => {
     await client.start();
     // Served from the snapshot even though no connection worked yet.
     expect(client.variation('new-checkout', false, { key: 'u_1' })).toBe(true);
+    // Until the server answers, the data is as old as the snapshot.
+    expect(client.updatedAt).toEqual(new Date('2026-11-01T00:00:00Z'));
     await waitFor(() => calls.length === 3);
     stream.send('put', { environment: 'production', flags: [flag('new-checkout', { version: 5, on: false })] });
     await waitFor(() => client.status === 'live');
     expect(client.variation('new-checkout', true, { key: 'u_1' })).toBe(false);
+    expect(client.updatedAt!.getTime()).toBeGreaterThan(new Date('2026-11-01T00:00:00Z').getTime());
     expect(errors.length).toBe(2);
     expect(statuses).toEqual(['connecting', 'offline', 'connecting', 'offline', 'connecting', 'live']);
     const saved = (await store.load()) as Snapshot;

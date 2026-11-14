@@ -97,6 +97,7 @@ export class FlagkenClient {
   private restart = false;
   private wake: (() => void) | undefined;
   private firstData: Promise<void>;
+  private updated: Date | null = null;
   private gotFirstData!: () => void;
 
   constructor(options: FlagkenOptions) {
@@ -160,6 +161,8 @@ export class FlagkenClient {
     const snapshot = await this.store.load().catch(() => undefined);
     if (snapshot && snapshot.mode === this.mode && snapshot.contextHash === contextHash(this.context)) {
       this.replace(snapshot.environment, snapshot.flags, false);
+      const saved = new Date(snapshot.savedAt);
+      this.updated = Number.isNaN(saved.getTime()) ? null : saved;
     }
     this.loop = this.run();
     return this.ready();
@@ -272,6 +275,15 @@ export class FlagkenClient {
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];
+  }
+
+  /**
+   * When the flags the SDK holds last came from the server (a put, a patch, a delete, a refresh), or, until then, when
+   * the snap-shot it started from was saved. Null before any data. A patch or delete older than the flag it names
+   * changes nothing, so it leaves this as it was. A health check can tell from it how old the data is.
+   */
+  get updatedAt(): Date | null {
+    return this.updated && new Date(this.updated);
   }
 
   get environmentKey(): string {
@@ -412,6 +424,7 @@ export class FlagkenClient {
       const current = this.flags.get(flag.key);
       if (current && current.version >= flag.version) return true;
       this.flags.set(flag.key, flag);
+      this.updated = new Date();
       this.emit('change', { key: flag.key, flag });
       this.persist();
       return true;
@@ -421,6 +434,7 @@ export class FlagkenClient {
       const current = this.flags.get(key);
       if (!current || current.version > version) return true;
       this.flags.delete(key);
+      this.updated = new Date();
       this.emit('change', { key, flag: undefined });
       this.persist();
       return true;
@@ -439,6 +453,7 @@ export class FlagkenClient {
     }
     for (const key of before.keys()) if (!this.flags.has(key)) this.emit('change', { key, flag: undefined });
     if (fresh) {
+      this.updated = new Date();
       this.gotFirstData();
       this.persist();
     }
