@@ -186,6 +186,16 @@ export class FlagkenClient {
     return this.variation(key, false, context) === true;
   }
 
+  /**
+   * Calls listener with the new answer of isEnabled each time it changes for a context (server mode) or for the
+   * identified context (client mode), such as to show or hide a feature without a reload. A change that keeps the
+   * answer, such as a flag turned into a string flag while it was off, makes no call. Returns a function that stops
+   * the calls.
+   */
+  watchEnabled(key: string, listener: (enabled: boolean) => void, context?: EvalContext): () => void {
+    return this.watch(key, false, (value) => listener(value === true), context);
+  }
+
   variationDetail<T extends JsonValue>(key: string, fallback: T, context?: EvalContext): EvalResult<T | JsonValue> {
     const flag = this.flags.get(key);
     let result: EvalResult<T | JsonValue>;

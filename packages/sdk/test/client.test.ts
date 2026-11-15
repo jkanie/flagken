@@ -185,6 +185,33 @@ describe('server mode', () => {
     expect(() => client.isEnabled('on-for-all')).toThrow('server mode needs a context for each evaluation');
   });
 
+  it('watchEnabled calls back each time the answer of isEnabled changes', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout')] });
+    await started;
+    const user = { key: 'u_1' };
+    const seen: boolean[] = [];
+    const stop = client.watchEnabled('new-checkout', (enabled) => seen.push(enabled), user);
+    stream.send('patch', flag('new-checkout', { version: 2, on: false }));
+    await waitFor(() => seen.length === 1);
+    // A string flag counts as off, as it was: no call.
+    stream.send('patch', flag('new-checkout', { version: 3, kind: 'string', variations: [{ value: 'a' }, { value: 'b' }] }));
+    await waitFor(() => client.variation('new-checkout', 'x', user) === 'b');
+    stream.send('patch', flag('new-checkout', { version: 4 }));
+    await waitFor(() => seen.length === 2);
+    expect(seen).toEqual([false, true]);
+    // Each call matches isEnabled at that moment.
+    expect(seen.at(-1)).toBe(client.isEnabled('new-checkout', user));
+    stop();
+    stream.send('patch', flag('new-checkout', { version: 5, on: false }));
+    await waitFor(() => !client.isEnabled('new-checkout', user));
+    expect(seen).toEqual([false, true]);
+    expect(() => client.watchEnabled('new-checkout', () => {})).toThrow('server mode needs a context to watch a flag');
+  });
+
   it('keys lists the held flags in key order', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
