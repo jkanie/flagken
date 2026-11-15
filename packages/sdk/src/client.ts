@@ -246,6 +246,18 @@ export class FlagkenClient {
   }
 
   /**
+   * The keys of the boolean flags that are on for a context (server mode) or for the identified context (client mode),
+   * in key order: every key for which isEnabled answers true, such as to tag a log line or a support ticket with the
+   * features a user had. A flag that is off, a flag that is not boolean, a flag that cannot be evaluated: each is
+   * left out.
+   */
+  enabledKeys(context?: EvalContext): string[] {
+    return this.evaluateAll(context, 'enabledKeys')
+      .filter(([, result]) => result.reason.kind !== 'ERROR' && result.value === true)
+      .map(([key]) => key);
+  }
+
+  /**
    * The value, variation index, reason of every flag for a context (server mode) or for the identified context
    * (client mode), in key order, such as for a page that shows why each user sees what they see. Unlike allValues,
    * a flag that cannot be evaluated is kept, with its ERROR reason and a null value.

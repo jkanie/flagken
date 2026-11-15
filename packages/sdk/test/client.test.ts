@@ -114,6 +114,31 @@ describe('server mode', () => {
     expect(() => client.allValues()).toThrow('server mode needs a context for allValues');
   });
 
+  it('enabledKeys lists the boolean flags that are on for 1 context, in key order', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', {
+      environment: 'production',
+      flags: [
+        flag('new-checkout', { targets: [{ variation: 0, values: ['u_1'] }] }),
+        flag('b-search'),
+        flag('a-off', { on: false }),
+        flag('broken', { fallthrough: { variation: 7 } }),
+        flag('theme', { kind: 'string', variations: [{ value: 'dark' }, { value: 'light' }] }),
+      ],
+    });
+    await started;
+    expect(client.enabledKeys({ key: 'u_1' })).toEqual(['b-search']);
+    expect(client.enabledKeys({ key: 'u_2' })).toEqual(['b-search', 'new-checkout']);
+    // The same answer as isEnabled for every key the SDK holds.
+    for (const user of ['u_1', 'u_2']) {
+      expect(client.enabledKeys({ key: user })).toEqual(client.keys().filter((k) => client.isEnabled(k, { key: user })));
+    }
+    expect(() => client.enabledKeys()).toThrow('server mode needs a context for enabledKeys');
+  });
+
   it('allDetails keeps every flag with its variation and reason, errors too', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);
