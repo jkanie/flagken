@@ -156,6 +156,35 @@ describe('server mode', () => {
     expect(client.variationDetail('new-checkout', false, { key: 'u_1' }).reason).toEqual({ kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' });
   });
 
+  it('isEnabled is variation with false as the fall-back', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', {
+      environment: 'production',
+      flags: [
+        flag('on-for-all'),
+        flag('off', { on: false }),
+        flag('beta-only', { targets: [{ variation: 1, values: ['u_beta'] }], fallthrough: { variation: 0 } }),
+        flag('banner-text', { kind: 'string', variations: [{ value: 'hi' }, { value: 'hello' }] }),
+      ],
+    });
+    await started;
+    const user = { key: 'u_1' };
+    expect(client.isEnabled('on-for-all', user)).toBe(true);
+    expect(client.isEnabled('off', user)).toBe(false);
+    expect(client.isEnabled('beta-only', user)).toBe(false);
+    expect(client.isEnabled('beta-only', { key: 'u_beta' })).toBe(true);
+    // A missing flag and a flag that is not boolean both count as off.
+    expect(client.isEnabled('missing', user)).toBe(false);
+    expect(client.isEnabled('banner-text', user)).toBe(false);
+    for (const key of ['on-for-all', 'off', 'beta-only', 'missing', 'banner-text']) {
+      expect(client.isEnabled(key, user)).toBe(client.variation(key, false, user) === true);
+    }
+    expect(() => client.isEnabled('on-for-all')).toThrow('server mode needs a context for each evaluation');
+  });
+
   it('keys lists the held flags in key order', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);

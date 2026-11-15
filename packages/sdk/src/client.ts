@@ -177,6 +177,15 @@ export class FlagkenClient {
     return this.variationDetail(key, fallback, context).value as Widen<T>;
   }
 
+  /**
+   * Whether a boolean flag is on for a context (server mode) or for the identified context (client mode): variation
+   * with false as the fall-back. A missing flag, a flag that is not boolean, a flag that cannot be evaluated: each
+   * counts as off.
+   */
+  isEnabled(key: string, context?: EvalContext): boolean {
+    return this.variation(key, false, context) === true;
+  }
+
   variationDetail<T extends JsonValue>(key: string, fallback: T, context?: EvalContext): EvalResult<T | JsonValue> {
     const flag = this.flags.get(key);
     let result: EvalResult<T | JsonValue>;
