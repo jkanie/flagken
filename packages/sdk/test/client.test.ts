@@ -139,6 +139,50 @@ describe('server mode', () => {
     expect(() => client.enabledKeys()).toThrow('server mode needs a context for enabledKeys');
   });
 
+  it('watchEnabledKeys calls back only when the list of enabled keys changes', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', {
+      environment: 'production',
+      flags: [
+        flag('new-checkout'),
+        flag('theme', { kind: 'string', variations: [{ value: 'dark' }, { value: 'light' }], fallthrough: { variation: 0 } }),
+      ],
+    });
+    await started;
+    expect(client.variation('theme', '', { key: 'u_1' })).toBe('dark');
+
+    const seen: string[][] = [];
+    const stop = client.watchEnabledKeys((keys) => seen.push(keys), { key: 'u_1' });
+    // A string flag that changes value leaves the list as it was: no call.
+    stream.send(
+      'patch',
+      flag('theme', { version: 2, kind: 'string', variations: [{ value: 'dark' }, { value: 'light' }], fallthrough: { variation: 1 } }),
+    );
+    await waitFor(() => client.variation('theme', '', { key: 'u_1' }) === 'light');
+    expect(seen).toEqual([]);
+
+    // A flag turned off, a flag added that is on, a flag deleted: 1 call each, with the list in key order.
+    stream.send('patch', flag('new-checkout', { version: 2, on: false }));
+    await waitFor(() => seen.length === 1);
+    stream.send('patch', flag('b-search'));
+    await waitFor(() => seen.length === 2);
+    stream.send('patch', flag('a-banner'));
+    await waitFor(() => seen.length === 3);
+    stream.send('delete', { key: 'b-search', version: 2 });
+    await waitFor(() => seen.length === 4);
+    expect(seen).toEqual([[], ['b-search'], ['a-banner', 'b-search'], ['a-banner']]);
+    for (const keys of seen) expect(keys).toEqual([...keys].sort());
+
+    stop();
+    stream.send('patch', flag('new-checkout', { version: 3 }));
+    await waitFor(() => client.isEnabled('new-checkout', { key: 'u_1' }));
+    expect(seen).toHaveLength(4);
+    expect(() => client.watchEnabledKeys(() => {})).toThrow('server mode needs a context to watch flags');
+  });
+
   it('allDetails keeps every flag with its variation and reason, errors too', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);

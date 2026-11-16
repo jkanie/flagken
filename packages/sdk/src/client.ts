@@ -258,6 +258,24 @@ export class FlagkenClient {
   }
 
   /**
+   * Calls listener with the new enabledKeys for a context (server mode) or for the identified context (client mode)
+   * each time that list changes, such as to keep the features of a log line or a support widget up to date. A change
+   * that leaves the list the same, such as a string flag that changes value, makes no call. Returns a function that
+   * stops the calls.
+   */
+  watchEnabledKeys(listener: (keys: string[]) => void, context?: EvalContext): () => void {
+    if (this.mode === 'server' && !(context ?? this.context)) throw new Error('server mode needs a context to watch flags');
+    let last = this.enabledKeys(context).join('\n');
+    return this.on('change', () => {
+      const keys = this.enabledKeys(context);
+      const text = keys.join('\n');
+      if (text === last) return;
+      last = text;
+      listener(keys);
+    });
+  }
+
+  /**
    * The value, variation index, reason of every flag for a context (server mode) or for the identified context
    * (client mode), in key order, such as for a page that shows why each user sees what they see. Unlike allValues,
    * a flag that cannot be evaluated is kept, with its ERROR reason and a null value.
