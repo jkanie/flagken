@@ -139,6 +139,32 @@ describe('server mode', () => {
     expect(() => client.enabledKeys()).toThrow('server mode needs a context for enabledKeys');
   });
 
+  it('watchKeys calls back only when a flag is added or deleted', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('b-search')] });
+    await started;
+
+    const seen: string[][] = [];
+    const stop = client.watchKeys((keys) => seen.push(keys));
+    // A change to a flag that is there makes no call, in server mode with no context too.
+    stream.send('patch', flag('b-search', { version: 2, on: false }));
+    await waitFor(() => !client.isEnabled('b-search', { key: 'u_1' }));
+    expect(seen).toEqual([]);
+    stream.send('patch', flag('a-banner'));
+    await waitFor(() => seen.length === 1);
+    stream.send('delete', { key: 'b-search', version: 3 });
+    await waitFor(() => seen.length === 2);
+    expect(seen).toEqual([['a-banner', 'b-search'], ['a-banner']]);
+
+    stop();
+    stream.send('patch', flag('c-new'));
+    await waitFor(() => client.keys().includes('c-new'));
+    expect(seen).toHaveLength(2);
+  });
+
   it('watchDetail calls back when the value, the variation or the reason changes', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);

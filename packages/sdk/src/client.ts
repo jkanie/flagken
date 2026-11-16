@@ -352,6 +352,21 @@ export class FlagkenClient {
     return [...this.flags.keys()].sort();
   }
 
+  /**
+   * Calls listener with the new keys() each time a flag is added or deleted, such as to refresh a list of flags in a
+   * debug panel. A change to a flag that is already there makes no call. Returns a function that stops the calls.
+   */
+  watchKeys(listener: (keys: string[]) => void): () => void {
+    let last = this.keys().join('\n');
+    return this.on('change', () => {
+      const keys = this.keys();
+      const text = keys.join('\n');
+      if (text === last) return;
+      last = text;
+      listener(keys);
+    });
+  }
+
   /** Every flag as the SDK holds it now. */
   allFlags(): Flag[] {
     return [...this.flags.values()];
