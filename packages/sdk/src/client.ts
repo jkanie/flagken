@@ -381,6 +381,15 @@ export class FlagkenClient {
     return this.updated && new Date(this.updated);
   }
 
+  /**
+   * True when the SDK holds no data yet, or when updatedAt is more than maxAgeMs before now, such as for a health
+   * check that fails once the flags stop coming. An age of exactly maxAgeMs is not stale. now is for tests.
+   */
+  isStale(maxAgeMs: number, now: number = Date.now()): boolean {
+    if (!Number.isFinite(maxAgeMs) || maxAgeMs < 0) throw new RangeError('maxAgeMs must be a number of 0 or more');
+    return this.updated === null || now - this.updated.getTime() > maxAgeMs;
+  }
+
   get environmentKey(): string {
     return this.environment;
   }

@@ -391,6 +391,25 @@ describe('server mode', () => {
     await waitFor(() => client.updatedAt!.getTime() > patched);
   });
 
+  it('isStale is true with no data, then once updatedAt is older than the limit', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    // No data at all is stale, whatever the limit.
+    expect(client.isStale(Number.MAX_SAFE_INTEGER)).toBe(true);
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout', { version: 3 })] });
+    await started;
+    const at = client.updatedAt!.getTime();
+    expect(client.isStale(60_000)).toBe(false);
+    expect(client.isStale(0, at)).toBe(false);
+    expect(client.isStale(60_000, at + 60_000)).toBe(false);
+    expect(client.isStale(60_000, at + 60_001)).toBe(true);
+    for (const bad of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => client.isStale(bad)).toThrow(RangeError);
+    }
+  });
+
   it('refuses a time option that is not above 0, and keeps the default for undefined', async () => {
     const base = { baseUrl: 'http://flags.test', apiKey: SERVER_KEY };
     for (const name of ['pollIntervalMs', 'startTimeoutMs', 'idleTimeoutMs'] as const) {
@@ -606,6 +625,9 @@ describe('offline and reconnect', () => {
     expect(client.variation('new-checkout', false, { key: 'u_1' })).toBe(true);
     // Until the server answers, the data is as old as the snapshot.
     expect(client.updatedAt).toEqual(new Date('2026-11-01T00:00:00Z'));
+    // isStale reads that age: exactly the limit is not stale, 1 ms more is.
+    expect(client.isStale(60_000, Date.parse('2026-11-01T00:01:00Z'))).toBe(false);
+    expect(client.isStale(60_000, Date.parse('2026-11-01T00:01:00.001Z'))).toBe(true);
     await waitFor(() => calls.length === 3);
     stream.send('put', { environment: 'production', flags: [flag('new-checkout', { version: 5, on: false })] });
     await waitFor(() => client.status === 'live');
