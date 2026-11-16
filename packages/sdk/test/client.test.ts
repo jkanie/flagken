@@ -139,6 +139,38 @@ describe('server mode', () => {
     expect(() => client.enabledKeys()).toThrow('server mode needs a context for enabledKeys');
   });
 
+  it('watchDetail calls back when the value, the variation or the reason changes', async () => {
+    const stream = new FakeStream();
+    const { fetcher } = fakeFetch([() => new Response(stream.body)]);
+    const client = track(new FlagkenClient({ baseUrl: 'http://flags.test', apiKey: SERVER_KEY, fetch: fetcher, ...fast }));
+    const started = client.start();
+    stream.send('put', { environment: 'production', flags: [flag('new-checkout'), flag('other')] });
+    await started;
+
+    const details: unknown[] = [];
+    const values: unknown[] = [];
+    const stop = client.watchDetail('new-checkout', false, (d) => details.push(d), { key: 'u_1' });
+    client.watch('new-checkout', false, (v) => values.push(v), { key: 'u_1' });
+    // A target on the same value: the reason changes, so watchDetail calls and watch does not.
+    stream.send('patch', flag('new-checkout', { version: 2, targets: [{ variation: 1, values: ['u_1'] }] }));
+    await waitFor(() => details.length === 1);
+    expect(details[0]).toEqual({ value: true, variation: 1, reason: { kind: 'TARGET_MATCH' } });
+    expect(values).toEqual([]);
+    // Another flag changes: no call. The flag turned off: 1 call with the off value.
+    stream.send('patch', flag('other', { version: 2, on: false }));
+    await waitFor(() => !client.isEnabled('other', { key: 'u_1' }));
+    stream.send('patch', flag('new-checkout', { version: 3, on: false }));
+    await waitFor(() => details.length === 2);
+    expect(details[1]).toEqual({ value: false, variation: 0, reason: { kind: 'OFF' } });
+    expect(values).toEqual([false]);
+
+    stop();
+    stream.send('patch', flag('new-checkout', { version: 4 }));
+    await waitFor(() => client.isEnabled('new-checkout', { key: 'u_1' }));
+    expect(details).toHaveLength(2);
+    expect(() => client.watchDetail('new-checkout', false, () => {})).toThrow('server mode needs a context to watch a flag');
+  });
+
   it('watchEnabledKeys calls back only when the list of enabled keys changes', async () => {
     const stream = new FakeStream();
     const { fetcher } = fakeFetch([() => new Response(stream.body)]);

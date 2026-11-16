@@ -233,6 +233,29 @@ export class FlagkenClient {
   }
 
   /**
+   * As watch, but calls listener with the whole variationDetail (value, variation index, reason) each time any of the
+   * 3 changes, such as to log why a user now gets a feature. A context that moves from the fall-through to a target
+   * on the same value makes a call here, where watch makes none. Returns a function that stops the calls.
+   */
+  watchDetail<T extends JsonValue>(
+    key: string,
+    fallback: T,
+    listener: (detail: EvalResult<T | JsonValue>) => void,
+    context?: EvalContext,
+  ): () => void {
+    if (this.mode === 'server' && !(context ?? this.context)) throw new Error('server mode needs a context to watch a flag');
+    let last = JSON.stringify(this.variationDetail(key, fallback, context));
+    return this.on('change', (event) => {
+      if (event.key !== key) return;
+      const detail = this.variationDetail(key, fallback, context);
+      const text = JSON.stringify(detail);
+      if (text === last) return;
+      last = text;
+      listener(detail);
+    });
+  }
+
+  /**
    * The value of every flag for a context (server mode) or for the identified context (client mode), keyed by flag
    * key in key order, such as for a page that the server renders to hand to its browser code. A flag that cannot be
    * evaluated (a variation index that does not exist) is left out, where variation would answer with its fall-back.
