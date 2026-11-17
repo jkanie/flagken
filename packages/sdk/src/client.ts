@@ -345,6 +345,14 @@ export class FlagkenClient {
   }
 
   /**
+   * The flag with this key as the SDK holds it now (as allFlags gives it), or undefined when it holds none, such as
+   * to show its version on a debug page. It reads no context, so it works the same in both modes.
+   */
+  flag(key: string): Flag | undefined {
+    return this.flags.get(key);
+  }
+
+  /**
    * The keys of the flags the SDK holds now, in the key order of allValues and allDetails, such as for a page that
    * lists every flag. It reads no context, so it works the same in both modes, and it keeps a flag that is off.
    */

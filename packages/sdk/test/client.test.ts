@@ -278,8 +278,13 @@ describe('server mode', () => {
     // A flag that is off is still held.
     expect(client.has('a-off')).toBe(true);
     expect(client.has('missing')).toBe(false);
+    // flag gives what has finds: the same object as allFlags, or undefined.
+    expect(client.flag('a-off')).toBe(client.allFlags().find((f) => f.key === 'a-off'));
+    expect(client.flag('a-off')).toMatchObject({ key: 'a-off', on: false });
+    expect(client.flag('missing')).toBeUndefined();
     stream.send('delete', { key: 'new-checkout', version: 2 });
     await waitFor(() => !client.has('new-checkout'));
+    expect(client.flag('new-checkout')).toBeUndefined();
     expect(client.variationDetail('new-checkout', false, { key: 'u_1' }).reason).toEqual({ kind: 'ERROR', errorKind: 'FLAG_NOT_FOUND' });
   });
 
